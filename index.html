@@ -306,8 +306,8 @@
   /* ── Theme Toggle ── */
   .theme-toggle {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: 16px;
+    right: 16px;
     z-index: 999;
     display: flex;
     align-items: center;
@@ -333,6 +333,11 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
+  }
+
+  .theme-toggle button .btn-label {
+    display: inline;
   }
 
   .theme-toggle button.active {
@@ -345,7 +350,25 @@
     color: var(--text);
   }
 
-  @keyframes fadeDown { from { opacity:0; transform: translateY(-16px); } to { opacity:1; transform: translateY(0); } }
+  /* On small screens: icon only, no text label */
+  @media (max-width: 500px) {
+    .theme-toggle {
+      top: 10px;
+      right: 10px;
+    }
+    .theme-toggle button {
+      padding: 7px 10px;
+      gap: 0;
+      font-size: 14px;
+    }
+    .theme-toggle button .btn-label {
+      display: none;
+    }
+  }
+
+  @media (max-width: 500px) {
+    body { padding-top: 70px; }
+  }
   @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
 
   .section:nth-child(1) { animation-delay: 0.1s; }
@@ -371,8 +394,8 @@
 
 <!-- Theme Toggle -->
 <div class="theme-toggle" role="group" aria-label="Theme switcher">
-  <button id="btn-dark" class="active" onclick="setTheme('dark')" title="Dark theme">🌙 Dark</button>
-  <button id="btn-light" onclick="setTheme('light')" title="Light theme">☀️ Light</button>
+  <button id="btn-dark" class="active" onclick="setTheme('dark')" title="Dark theme">🌙 <span class="btn-label">Dark</span></button>
+  <button id="btn-light" onclick="setTheme('light')" title="Light theme">☀️ <span class="btn-label">Light</span></button>
 </div>
 
 <header>
