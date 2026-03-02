@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux File Execution Cheat Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --border: #1e2330;
+    --accent1: #00ffa3;
+    --accent2: #00c8ff;
+    --accent3: #ff6b6b;
+    --accent4: #ffd93d;
+    --accent5: #c77dff;
+    --accent6: #ff9f43;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --cmd-bg: #0d1117;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px;
+    background-image:
+      radial-gradient(ellipse at 10% 0%, rgba(0,255,163,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 100%, rgba(0,200,255,0.07) 0%, transparent 50%);
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 50px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  header .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent1);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  header h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 30%, var(--accent1) 70%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+
+  header p {
+    color: var(--muted);
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .search-bar {
+    max-width: 500px;
+    margin: 0 auto 50px;
+    position: relative;
+    animation: fadeDown 0.6s 0.1s ease both;
+  }
+
+  .search-bar input {
+    width: 100%;
+    padding: 14px 20px 14px 46px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-bar input:focus { border-color: var(--accent1); }
+  .search-bar input::placeholder { color: var(--muted); }
+
+  .search-bar .icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  .section {
+    max-width: 1100px;
+    margin: 0 auto 50px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .section-title .label {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  .section-title .line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ext-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 5px;
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .card-subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .card-body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cmd-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .cmd-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .cmd {
+    background: var(--cmd-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: #cdd6f4;
+    position: relative;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    word-break: break-all;
+  }
+
+  .cmd:hover { border-color: rgba(255,255,255,0.2); }
+  .cmd .prompt { color: var(--accent1); user-select: none; }
+  .cmd .flag { color: var(--accent4); }
+  .cmd .arg { color: var(--accent2); }
+  .cmd .comment { color: var(--muted); font-style: italic; }
+
+  .copy-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .copy-btn:hover { color: var(--text); background: var(--border); }
+  .copy-btn.copied { color: var(--accent1); }
+
+  .note {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 5px;
+    border-left: 2px solid var(--border);
+    margin-top: 2px;
+  }
+
+  .hidden { display: none !important; }
+
+  /* Color themes per section */
+  .cat-code .label { background: rgba(0,255,163,0.1); color: var(--accent1); }
+  .cat-code .card { border-top: 2px solid var(--accent1); }
+  .cat-code .card:hover { border-color: var(--accent1); box-shadow: 0 8px 30px rgba(0,255,163,0.1); }
+
+  .cat-data .label { background: rgba(0,200,255,0.1); color: var(--accent2); }
+  .cat-data .card { border-top: 2px solid var(--accent2); }
+  .cat-data .card:hover { border-color: var(--accent2); box-shadow: 0 8px 30px rgba(0,200,255,0.1); }
+
+  .cat-docs .label { background: rgba(255,107,107,0.1); color: var(--accent3); }
+  .cat-docs .card { border-top: 2px solid var(--accent3); }
+  .cat-docs .card:hover { border-color: var(--accent3); box-shadow: 0 8px 30px rgba(255,107,107,0.1); }
+
+  .cat-sys .label { background: rgba(255,217,61,0.1); color: var(--accent4); }
+  .cat-sys .card { border-top: 2px solid var(--accent4); }
+  .cat-sys .card:hover { border-color: var(--accent4); box-shadow: 0 8px 30px rgba(255,217,61,0.1); }
+
+  .cat-db .label { background: rgba(199,125,255,0.1); color: var(--accent5); }
+  .cat-db .card { border-top: 2px solid var(--accent5); }
+  .cat-db .card:hover { border-color: var(--accent5); box-shadow: 0 8px 30px rgba(199,125,255,0.1); }
+
+  .cat-net .label { background: rgba(255,159,67,0.1); color: var(--accent6); }
+  .cat-net .card { border-top: 2px solid var(--accent6); }
+  .cat-net .card:hover { border-color: var(--accent6); box-shadow: 0 8px 30px rgba(255,159,67,0.1); }
+
+  @keyframes fadeDown { from { opacity:0; transform: translateY(-16px); } to { opacity:1; transform: translateY(0); } }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+
+  .section:nth-child(1) { animation-delay: 0.1s; }
+  .section:nth-child(2) { animation-delay: 0.15s; }
+  .section:nth-child(3) { animation-delay: 0.2s; }
+  .section:nth-child(4) { animation-delay: 0.25s; }
+  .section:nth-child(5) { animation-delay: 0.3s; }
+  .section:nth-child(6) { animation-delay: 0.35s; }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 30px 0 10px;
+    max-width: 1100px;
+    margin: 0 auto;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">// reference guide</div>
+  <h1>Linux File Execution<br>Cheat Sheet</h1>
+  <p>IT · Computer Science · Data Science · DevOps · Networking</p>
+</header>
+
+<div class="search-bar">
+  <span class="icon">⌕</span>
+  <input type="text" id="search" placeholder="Search extension or description..." oninput="filterCards()">
+</div>
+
+<!-- SECTION 1: Programming & Scripting -->
+<div class="section cat-code" id="sec-code">
+  <div class="section-title">
+    <span class="label">Programming &amp; Scripting</span>
+    <div class="line"></div>
+  </div>
+  <div class="grid">
+
+    <div class="card" data-tags="cpp c++ compile run g++ clang">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,255,163,0.1);color:var(--accent1)">.cpp</span>
+        <div><div class="card-title">C++ Source</div><div class="card-subtitle">Compiled language</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Compile</div>
+          <div class="cmd"><span class="prompt">$ </span>g++ <span class="flag">-o</span> <span class="arg">output</span> file.cpp<button class="copy-btn" onclick="copyCmd(this, 'g++ -o output file.cpp')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Run</div>
+          <div class="cmd"><span class="prompt">$ </span>./output<button class="copy-btn" onclick="copyCmd(this, './output')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Compile + Run (one-liner)</div>
+          <div class="cmd"><span class="prompt">$ </span>g++ file.cpp <span class="flag">-o</span> out <span class="flag">&amp;&amp;</span> ./out<button class="copy-btn" onclick="copyCmd(this, 'g++ file.cpp -o out && ./out')">copy</button></div></div>
+        <div class="note">Install: sudo apt install g++</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="c compile run gcc">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,255,163,0.1);color:var(--accent1)">.c</span>
+        <div><div class="card-title">C Source</div><div class="card-subtitle">Compiled language</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Compile</div>
+          <div class="cmd"><span class="prompt">$ </span>gcc <span class="flag">-o</span> <span class="arg">output</span> file.c<button class="copy-btn" onclick="copyCmd(this, 'gcc -o output file.c')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Run</div>
+          <div class="cmd"><span class="prompt">$ </span>./output<button class="copy-btn" onclick="copyCmd(this, './output')">copy</button></div></div>
+        <div class="note">Install: sudo apt install gcc</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="python py run execute script">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,255,163,0.1);color:var(--accent1)">.py</span>
+        <div><div class="card-title">Python Script</div><div class="card-subtitle">Interpreted language</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Run</div>
+          <div class="cmd"><span class="prompt">$ </span>python3 file.py<button class="copy-btn" onclick="copyCmd(this, 'python3 file.py')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Interactive mode</div>
+          <div class="cmd"><span class="prompt">$ </span>python3 <span class="flag">-i</span> file.py<button class="copy-btn" onclick="copyCmd(this, 'python3 -i file.py')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">With venv</div>
+          <div class="cmd"><span class="prompt">$ </span>source venv/bin/activate <span class="flag">&amp;&amp;</span> python3 file.py<button class="copy-btn" onclick="copyCmd(this, 'source venv/bin/activate && python3 file.py')">copy</button></div></div>
+        <div class="note">Install: sudo apt install python3</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="javascript js node run execute script nodejs">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,255,163,0.1);color:var(--accent1)">.js</span>
+        <div><div class="card-title">JavaScript</div><div class="card-subtitle">Node.js runtime</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Run with Node</div>
+          <div class="cmd"><span class="prompt">$ </span>node file.js<button class="copy-btn" onclick="copyCmd(this, 'node file.js')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Watch mode (nodemon)</div>
+          <div class="cmd"><span class="prompt">$ </span>nodemon file.js<button class="copy-btn" onclick="copyCmd(this, 'nodemon file.js')">copy</button></div></div>
+        <div class="note">Install: sudo apt install nodejs</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="typescript ts tsc compile transpile deno">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,255,163,0.1);color:var(--accent1)">.ts</span>
+        <div><div class="card-title">TypeScript</div><div class="card-subtitle">Compiled to JS</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Compile + Run</div>
+          <div class="cmd"><span class="prompt">$ </span>tsc file.ts <span class="flag">&amp;&amp;</span> node file.js<button class="copy-btn" onclick="copyCmd(this, 'tsc file.ts && node file.js')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Run directly (ts-node)</div>
+          <div class="cmd"><span class="prompt">$ </span>ts-node file.ts<button class="copy-btn" onclick="copyCmd(this, 'ts-node file.ts')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Run with Deno</div>
+          <div class="cmd"><span class="prompt">$ </span>deno run file.ts<button class="copy-btn" onclick="copyCmd(this, 'deno run file.ts')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="shell bash sh script execute run chmod">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,255,163,0.1);color:var(--accent1)">.sh</span>
+        <div><div class="card-title">Shell Script</div><div class="card-subtitle">Bash / POSIX shell</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Run directly</div>
+          <div class="cmd"><span class="prompt">$ </span>bash file.sh<button class="copy-btn" onclick="copyCmd(this, 'bash file.sh')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Make executable + run</div>
+          <div class="cmd"><span class="prompt">$ </span>chmod <span class="arg">+x</span> file.sh <span class="flag">&amp;&amp;</span> ./file.sh<button class="copy-btn" onclick="copyCmd(this, 'chmod +x file.sh && ./file.sh')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Debug mode</div>
+          <div class="cmd"><span class="prompt">$ </span>bash <span class="flag">-x</span> file.sh<button class="copy-btn" onclick="copyCmd(this, 'bash -x file.sh')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="java compile run javac jvm">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,255,163,0.1);color:var(--accent1)">.java</span>
+        <div><div class="card-title">Java Source</div><div class="card-subtitle">Compiled to bytecode</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Compile</div>
+          <div class="cmd"><span class="prompt">$ </span>javac file.java<button class="copy-btn" onclick="copyCmd(this, 'javac file.java')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Run (no .class extension)</div>
+          <div class="cmd"><span class="prompt">$ </span>java ClassName<button class="copy-btn" onclick="copyCmd(this, 'java ClassName')">copy</button></div></div>
+        <div class="note">Install: sudo apt install default-jdk</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="go golang run build compile">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,255,163,0.1);color:var(--accent1)">.go</span>
+        <div><div class="card-title">Go Source</div><div class="card-subtitle">Compiled language</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Run directly</div>
+          <div class="cmd"><span class="prompt">$ </span>go run file.go<button class="copy-btn" onclick="copyCmd(this, 'go run file.go')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Build binary</div>
+          <div class="cmd"><span class="prompt">$ </span>go build <span class="flag">-o</span> <span class="arg">output</span> file.go<button class="copy-btn" onclick="copyCmd(this, 'go build -o output file.go')">copy</button></div></div>
+        <div class="note">Install: sudo apt install golang</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="rust rs cargo compile run">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,255,163,0.1);color:var(--accent1)">.rs</span>
+        <div><div class="card-title">Rust Source</div><div class="card-subtitle">Systems language</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Compile</div>
+          <div class="cmd"><span class="prompt">$ </span>rustc file.rs<button class="copy-btn" onclick="copyCmd(this, 'rustc file.rs')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Run (via Cargo)</div>
+          <div class="cmd"><span class="prompt">$ </span>cargo run<button class="copy-btn" onclick="copyCmd(this, 'cargo run')">copy</button></div></div>
+        <div class="note">Install: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="ruby rb run execute gem">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,255,163,0.1);color:var(--accent1)">.rb</span>
+        <div><div class="card-title">Ruby Script</div><div class="card-subtitle">Interpreted language</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Run</div>
+          <div class="cmd"><span class="prompt">$ </span>ruby file.rb<button class="copy-btn" onclick="copyCmd(this, 'ruby file.rb')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">IRB interactive</div>
+          <div class="cmd"><span class="prompt">$ </span>irb <span class="flag">-r</span> ./file.rb<button class="copy-btn" onclick="copyCmd(this, 'irb -r ./file.rb')">copy</button></div></div>
+        <div class="note">Install: sudo apt install ruby</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="perl pl run execute">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,255,163,0.1);color:var(--accent1)">.pl</span>
+        <div><div class="card-title">Perl Script</div><div class="card-subtitle">Interpreted language</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Run</div>
+          <div class="cmd"><span class="prompt">$ </span>perl file.pl<button class="copy-btn" onclick="copyCmd(this, 'perl file.pl')">copy</button></div></div>
+        <div class="note">Install: sudo apt install perl</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="php run execute web server">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,255,163,0.1);color:var(--accent1)">.php</span>
+        <div><div class="card-title">PHP Script</div><div class="card-subtitle">Server-side language</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Run CLI</div>
+          <div class="cmd"><span class="prompt">$ </span>php file.php<button class="copy-btn" onclick="copyCmd(this, 'php file.php')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Built-in web server</div>
+          <div class="cmd"><span class="prompt">$ </span>php <span class="flag">-S</span> localhost:8000<button class="copy-btn" onclick="copyCmd(this, 'php -S localhost:8000')">copy</button></div></div>
+        <div class="note">Install: sudo apt install php</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 2: Web & Markup -->
+<div class="section cat-sys" id="sec-web">
+  <div class="section-title">
+    <span class="label">Web &amp; Markup</span>
+    <div class="line"></div>
+  </div>
+  <div class="grid">
+
+    <div class="card" data-tags="html open browser serve web">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,217,61,0.1);color:var(--accent4)">.html</span>
+        <div><div class="card-title">HTML File</div><div class="card-subtitle">Web markup</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Open in browser</div>
+          <div class="cmd"><span class="prompt">$ </span>xdg-open file.html<button class="copy-btn" onclick="copyCmd(this, 'xdg-open file.html')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Serve locally (Python)</div>
+          <div class="cmd"><span class="prompt">$ </span>python3 <span class="flag">-m</span> http.server 8080<button class="copy-btn" onclick="copyCmd(this, 'python3 -m http.server 8080')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Serve (Node live-server)</div>
+          <div class="cmd"><span class="prompt">$ </span>npx live-server .<button class="copy-btn" onclick="copyCmd(this, 'npx live-server .')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="css stylesheet style open view">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,217,61,0.1);color:var(--accent4)">.css</span>
+        <div><div class="card-title">CSS Stylesheet</div><div class="card-subtitle">Style sheet language</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Lint with stylelint</div>
+          <div class="cmd"><span class="prompt">$ </span>npx stylelint file.css<button class="copy-btn" onclick="copyCmd(this, 'npx stylelint file.css')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Minify</div>
+          <div class="cmd"><span class="prompt">$ </span>npx csso file.css <span class="flag">-o</span> file.min.css<button class="copy-btn" onclick="copyCmd(this, 'npx csso file.css -o file.min.css')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="xml parse validate view cat">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,217,61,0.1);color:var(--accent4)">.xml</span>
+        <div><div class="card-title">XML File</div><div class="card-subtitle">Markup / config data</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Pretty-print</div>
+          <div class="cmd"><span class="prompt">$ </span>xmllint <span class="flag">--format</span> file.xml<button class="copy-btn" onclick="copyCmd(this, 'xmllint --format file.xml')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Validate</div>
+          <div class="cmd"><span class="prompt">$ </span>xmllint <span class="flag">--noout</span> file.xml<button class="copy-btn" onclick="copyCmd(this, 'xmllint --noout file.xml')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Query with XPath</div>
+          <div class="cmd"><span class="prompt">$ </span>xmllint <span class="flag">--xpath</span> <span class="arg">"//tag"</span> file.xml<button class="copy-btn" onclick="copyCmd(this, 'xmllint --xpath "//tag" file.xml')">copy</button></div></div>
+        <div class="note">Install: sudo apt install libxml2-utils</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="json view format parse jq">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,217,61,0.1);color:var(--accent4)">.json</span>
+        <div><div class="card-title">JSON File</div><div class="card-subtitle">Data interchange format</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Pretty-print</div>
+          <div class="cmd"><span class="prompt">$ </span>cat file.json <span class="flag">|</span> python3 <span class="flag">-m</span> json.tool<button class="copy-btn" onclick="copyCmd(this, 'cat file.json | python3 -m json.tool')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Query with jq</div>
+          <div class="cmd"><span class="prompt">$ </span>jq <span class="arg">'.'</span> file.json<button class="copy-btn" onclick="copyCmd(this, "jq '.' file.json")">copy</button></div></div>
+        <div class="note">Install jq: sudo apt install jq</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="yaml yml parse validate view">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,217,61,0.1);color:var(--accent4)">.yaml / .yml</span>
+        <div><div class="card-title">YAML Config</div><div class="card-subtitle">Data serialization</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Validate / parse</div>
+          <div class="cmd"><span class="prompt">$ </span>python3 <span class="flag">-c</span> <span class="arg">"import yaml,sys; yaml.safe_load(open('file.yaml'))"</span><button class="copy-btn" onclick="copyCmd(this, 'python3 -c \"import yaml,sys; yaml.safe_load(open(\'file.yaml\'))\"')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Lint with yamllint</div>
+          <div class="cmd"><span class="prompt">$ </span>yamllint file.yaml<button class="copy-btn" onclick="copyCmd(this, 'yamllint file.yaml')">copy</button></div></div>
+        <div class="note">Install: pip install yamllint</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="markdown md preview render view">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,217,61,0.1);color:var(--accent4)">.md</span>
+        <div><div class="card-title">Markdown File</div><div class="card-subtitle">Docs / README</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">View rendered (glow)</div>
+          <div class="cmd"><span class="prompt">$ </span>glow file.md<button class="copy-btn" onclick="copyCmd(this, 'glow file.md')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Convert to HTML</div>
+          <div class="cmd"><span class="prompt">$ </span>pandoc file.md <span class="flag">-o</span> file.html<button class="copy-btn" onclick="copyCmd(this, 'pandoc file.md -o file.html')">copy</button></div></div>
+        <div class="note">Install glow: snap install glow</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 3: Documents & Text -->
+<div class="section cat-docs" id="sec-docs">
+  <div class="section-title">
+    <span class="label">Documents &amp; Text</span>
+    <div class="line"></div>
+  </div>
+  <div class="grid">
+
+    <div class="card" data-tags="text txt cat view read open">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,107,107,0.1);color:var(--accent3)">.txt</span>
+        <div><div class="card-title">Plain Text</div><div class="card-subtitle">General purpose text</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">View</div>
+          <div class="cmd"><span class="prompt">$ </span>cat file.txt<button class="copy-btn" onclick="copyCmd(this, 'cat file.txt')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Scroll through (pager)</div>
+          <div class="cmd"><span class="prompt">$ </span>less file.txt<button class="copy-btn" onclick="copyCmd(this, 'less file.txt')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Edit</div>
+          <div class="cmd"><span class="prompt">$ </span>nano file.txt<button class="copy-btn" onclick="copyCmd(this, 'nano file.txt')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Word count</div>
+          <div class="cmd"><span class="prompt">$ </span>wc <span class="flag">-w</span> file.txt<button class="copy-btn" onclick="copyCmd(this, 'wc -w file.txt')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="pdf view read open evince poppler">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,107,107,0.1);color:var(--accent3)">.pdf</span>
+        <div><div class="card-title">PDF Document</div><div class="card-subtitle">Portable Document Format</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Open in viewer</div>
+          <div class="cmd"><span class="prompt">$ </span>evince file.pdf<button class="copy-btn" onclick="copyCmd(this, 'evince file.pdf')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Extract text</div>
+          <div class="cmd"><span class="prompt">$ </span>pdftotext file.pdf output.txt<button class="copy-btn" onclick="copyCmd(this, 'pdftotext file.pdf output.txt')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Merge PDFs</div>
+          <div class="cmd"><span class="prompt">$ </span>pdfunite a.pdf b.pdf out.pdf<button class="copy-btn" onclick="copyCmd(this, 'pdfunite a.pdf b.pdf out.pdf')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Info / metadata</div>
+          <div class="cmd"><span class="prompt">$ </span>pdfinfo file.pdf<button class="copy-btn" onclick="copyCmd(this, 'pdfinfo file.pdf')">copy</button></div></div>
+        <div class="note">Install: sudo apt install poppler-utils evince</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="docx word open libreoffice convert doc">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,107,107,0.1);color:var(--accent3)">.docx</span>
+        <div><div class="card-title">Word Document</div><div class="card-subtitle">Microsoft Word format</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Open in LibreOffice</div>
+          <div class="cmd"><span class="prompt">$ </span>libreoffice file.docx<button class="copy-btn" onclick="copyCmd(this, 'libreoffice file.docx')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Convert to PDF</div>
+          <div class="cmd"><span class="prompt">$ </span>libreoffice <span class="flag">--headless --convert-to</span> pdf file.docx<button class="copy-btn" onclick="copyCmd(this, 'libreoffice --headless --convert-to pdf file.docx')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Extract text (pandoc)</div>
+          <div class="cmd"><span class="prompt">$ </span>pandoc file.docx <span class="flag">-t</span> plain<button class="copy-btn" onclick="copyCmd(this, 'pandoc file.docx -t plain')">copy</button></div></div>
+        <div class="note">Install: sudo apt install libreoffice</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="xlsx xls spreadsheet excel open libreoffice csv">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,107,107,0.1);color:var(--accent3)">.xlsx / .xls</span>
+        <div><div class="card-title">Excel Spreadsheet</div><div class="card-subtitle">Tabular data</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Open in LibreOffice Calc</div>
+          <div class="cmd"><span class="prompt">$ </span>libreoffice --calc file.xlsx<button class="copy-btn" onclick="copyCmd(this, 'libreoffice --calc file.xlsx')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Convert to CSV</div>
+          <div class="cmd"><span class="prompt">$ </span>libreoffice <span class="flag">--headless --convert-to</span> csv file.xlsx<button class="copy-btn" onclick="copyCmd(this, 'libreoffice --headless --convert-to csv file.xlsx')">copy</button></div></div>
+        <div class="note">Python: pip install openpyxl</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="csv comma separated view sort head awk">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,107,107,0.1);color:var(--accent3)">.csv</span>
+        <div><div class="card-title">CSV File</div><div class="card-subtitle">Comma-separated values</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">View formatted</div>
+          <div class="cmd"><span class="prompt">$ </span>column <span class="flag">-t -s,</span> file.csv <span class="flag">|</span> less<button class="copy-btn" onclick="copyCmd(this, 'column -t -s, file.csv | less')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">View with csvkit</div>
+          <div class="cmd"><span class="prompt">$ </span>csvlook file.csv<button class="copy-btn" onclick="copyCmd(this, 'csvlook file.csv')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Count rows</div>
+          <div class="cmd"><span class="prompt">$ </span>wc <span class="flag">-l</span> file.csv<button class="copy-btn" onclick="copyCmd(this, 'wc -l file.csv')">copy</button></div></div>
+        <div class="note">Install: pip install csvkit</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 4: Data Science & ML -->
+<div class="section cat-data" id="sec-ds">
+  <div class="section-title">
+    <span class="label">Data Science &amp; Machine Learning</span>
+    <div class="line"></div>
+  </div>
+  <div class="grid">
+
+    <div class="card" data-tags="jupyter notebook ipynb run open data science">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,200,255,0.1);color:var(--accent2)">.ipynb</span>
+        <div><div class="card-title">Jupyter Notebook</div><div class="card-subtitle">Interactive data science</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Launch Jupyter Lab</div>
+          <div class="cmd"><span class="prompt">$ </span>jupyter lab file.ipynb<button class="copy-btn" onclick="copyCmd(this, 'jupyter lab file.ipynb')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Run all cells headless</div>
+          <div class="cmd"><span class="prompt">$ </span>jupyter nbconvert <span class="flag">--to notebook --execute</span> file.ipynb<button class="copy-btn" onclick="copyCmd(this, 'jupyter nbconvert --to notebook --execute file.ipynb')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Convert to Python</div>
+          <div class="cmd"><span class="prompt">$ </span>jupyter nbconvert <span class="flag">--to script</span> file.ipynb<button class="copy-btn" onclick="copyCmd(this, 'jupyter nbconvert --to script file.ipynb')">copy</button></div></div>
+        <div class="note">Install: pip install jupyterlab</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="r rscript statistics run execute data science">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,200,255,0.1);color:var(--accent2)">.R / .r</span>
+        <div><div class="card-title">R Script</div><div class="card-subtitle">Statistical computing</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Run script</div>
+          <div class="cmd"><span class="prompt">$ </span>Rscript file.R<button class="copy-btn" onclick="copyCmd(this, 'Rscript file.R')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Interactive R console</div>
+          <div class="cmd"><span class="prompt">$ </span>R<button class="copy-btn" onclick="copyCmd(this, 'R')">copy</button></div></div>
+        <div class="note">Install: sudo apt install r-base</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="parquet arrow data view schema">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,200,255,0.1);color:var(--accent2)">.parquet</span>
+        <div><div class="card-title">Apache Parquet</div><div class="card-subtitle">Columnar data format</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Inspect schema</div>
+          <div class="cmd"><span class="prompt">$ </span>python3 <span class="flag">-c</span> <span class="arg">"import pandas as pd; print(pd.read_parquet('file.parquet').info())"</span><button class="copy-btn" onclick="copyCmd(this, 'python3 -c \"import pandas as pd; print(pd.read_parquet(\'file.parquet\').info())\"')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">View with DuckDB</div>
+          <div class="cmd"><span class="prompt">$ </span>duckdb <span class="flag">-c</span> <span class="arg">"SELECT * FROM 'file.parquet' LIMIT 10"</span><button class="copy-btn" onclick="copyCmd(this, 'duckdb -c \"SELECT * FROM \'file.parquet\' LIMIT 10\"')">copy</button></div></div>
+        <div class="note">Install: pip install pandas pyarrow duckdb</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="hdf5 h5 hierarchical data model weights">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,200,255,0.1);color:var(--accent2)">.h5 / .hdf5</span>
+        <div><div class="card-title">HDF5 File</div><div class="card-subtitle">Scientific / ML data</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">List structure</div>
+          <div class="cmd"><span class="prompt">$ </span>h5ls <span class="flag">-r</span> file.h5<button class="copy-btn" onclick="copyCmd(this, 'h5ls -r file.h5')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Dump to text</div>
+          <div class="cmd"><span class="prompt">$ </span>h5dump file.h5 <span class="flag">| less</span><button class="copy-btn" onclick="copyCmd(this, 'h5dump file.h5 | less')">copy</button></div></div>
+        <div class="note">Install: sudo apt install hdf5-tools</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="pkl pickle python model load save">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,200,255,0.1);color:var(--accent2)">.pkl</span>
+        <div><div class="card-title">Python Pickle</div><div class="card-subtitle">Serialized Python object</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Inspect</div>
+          <div class="cmd"><span class="prompt">$ </span>python3 <span class="flag">-c</span> <span class="arg">"import pickle; obj=pickle.load(open('file.pkl','rb')); print(type(obj))"</span><button class="copy-btn" onclick="copyCmd(this, 'python3 -c \"import pickle; obj=pickle.load(open(\'file.pkl\',\'rb\')); print(type(obj))\"')">copy</button></div></div>
+        <div class="note">⚠ Never unpickle files from untrusted sources</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="npy numpy array data load">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(0,200,255,0.1);color:var(--accent2)">.npy / .npz</span>
+        <div><div class="card-title">NumPy Array</div><div class="card-subtitle">Numerical data arrays</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Load and inspect</div>
+          <div class="cmd"><span class="prompt">$ </span>python3 <span class="flag">-c</span> <span class="arg">"import numpy as np; a=np.load('file.npy'); print(a.shape, a.dtype)"</span><button class="copy-btn" onclick="copyCmd(this, 'python3 -c \"import numpy as np; a=np.load(\'file.npy\'); print(a.shape, a.dtype)\"')">copy</button></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 5: Databases & Config -->
+<div class="section cat-db" id="sec-db">
+  <div class="section-title">
+    <span class="label">Databases &amp; Configuration</span>
+    <div class="line"></div>
+  </div>
+  <div class="grid">
+
+    <div class="card" data-tags="sql sqlite mysql postgres database query run">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(199,125,255,0.1);color:var(--accent5)">.sql</span>
+        <div><div class="card-title">SQL Script</div><div class="card-subtitle">Database query / DDL</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Run on SQLite</div>
+          <div class="cmd"><span class="prompt">$ </span>sqlite3 mydb.db <span class="flag">&lt;</span> file.sql<button class="copy-btn" onclick="copyCmd(this, 'sqlite3 mydb.db < file.sql')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Run on PostgreSQL</div>
+          <div class="cmd"><span class="prompt">$ </span>psql <span class="flag">-U</span> user <span class="flag">-d</span> dbname <span class="flag">-f</span> file.sql<button class="copy-btn" onclick="copyCmd(this, 'psql -U user -d dbname -f file.sql')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Run on MySQL</div>
+          <div class="cmd"><span class="prompt">$ </span>mysql <span class="flag">-u</span> user <span class="flag">-p</span> dbname <span class="flag">&lt;</span> file.sql<button class="copy-btn" onclick="copyCmd(this, 'mysql -u user -p dbname < file.sql')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="sqlite db database open inspect browse">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(199,125,255,0.1);color:var(--accent5)">.db / .sqlite</span>
+        <div><div class="card-title">SQLite Database</div><div class="card-subtitle">Embedded database file</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Open interactive shell</div>
+          <div class="cmd"><span class="prompt">$ </span>sqlite3 file.db<button class="copy-btn" onclick="copyCmd(this, 'sqlite3 file.db')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">List tables</div>
+          <div class="cmd"><span class="prompt">$ </span>sqlite3 file.db <span class="arg">".tables"</span><button class="copy-btn" onclick="copyCmd(this, 'sqlite3 file.db \".tables\"')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Query to CSV</div>
+          <div class="cmd"><span class="prompt">$ </span>sqlite3 <span class="flag">-csv</span> file.db <span class="arg">"SELECT * FROM t"</span><button class="copy-btn" onclick="copyCmd(this, 'sqlite3 -csv file.db \"SELECT * FROM t\"')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="env environment config variables dotenv source">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(199,125,255,0.1);color:var(--accent5)">.env</span>
+        <div><div class="card-title">Environment File</div><div class="card-subtitle">Config variables</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Export all vars to shell</div>
+          <div class="cmd"><span class="prompt">$ </span>export $(cat .env <span class="flag">| xargs</span>)<button class="copy-btn" onclick="copyCmd(this, 'export $(cat .env | xargs)')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Source into current shell</div>
+          <div class="cmd"><span class="prompt">$ </span>source .env<button class="copy-btn" onclick="copyCmd(this, 'source .env')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="ini conf toml config parse view">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(199,125,255,0.1);color:var(--accent5)">.toml / .ini</span>
+        <div><div class="card-title">Config Files</div><div class="card-subtitle">App configuration</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">View</div>
+          <div class="cmd"><span class="prompt">$ </span>cat file.toml<button class="copy-btn" onclick="copyCmd(this, 'cat file.toml')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Validate TOML</div>
+          <div class="cmd"><span class="prompt">$ </span>python3 <span class="flag">-c</span> <span class="arg">"import tomllib; tomllib.load(open('file.toml','rb'))"</span><button class="copy-btn" onclick="copyCmd(this, 'python3 -c \"import tomllib; tomllib.load(open(\'file.toml\',\'rb\'))\"')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="dockerfile docker build run container image">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(199,125,255,0.1);color:var(--accent5)">Dockerfile</span>
+        <div><div class="card-title">Dockerfile</div><div class="card-subtitle">Container definition</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Build image</div>
+          <div class="cmd"><span class="prompt">$ </span>docker build <span class="flag">-t</span> <span class="arg">myimage</span> .<button class="copy-btn" onclick="copyCmd(this, 'docker build -t myimage .')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Build + run</div>
+          <div class="cmd"><span class="prompt">$ </span>docker build <span class="flag">-t</span> img . <span class="flag">&amp;&amp;</span> docker run <span class="flag">-it</span> img<button class="copy-btn" onclick="copyCmd(this, 'docker build -t img . && docker run -it img')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Lint (hadolint)</div>
+          <div class="cmd"><span class="prompt">$ </span>hadolint Dockerfile<button class="copy-btn" onclick="copyCmd(this, 'hadolint Dockerfile')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="makefile make build run targets">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(199,125,255,0.1);color:var(--accent5)">Makefile</span>
+        <div><div class="card-title">Makefile</div><div class="card-subtitle">Build automation</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Run default target</div>
+          <div class="cmd"><span class="prompt">$ </span>make<button class="copy-btn" onclick="copyCmd(this, 'make')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Run specific target</div>
+          <div class="cmd"><span class="prompt">$ </span>make <span class="arg">target_name</span><button class="copy-btn" onclick="copyCmd(this, 'make target_name')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">List all targets</div>
+          <div class="cmd"><span class="prompt">$ </span>make <span class="flag">-qp</span> <span class="flag">|</span> awk <span class="arg">'/^[^#\t].*:/{print $1}'</span><button class="copy-btn" onclick="copyCmd(this, 'make -qp | awk \'/^[^#\\t].*:/{print $1}\'')">copy</button></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 6: System, Networking & DevOps -->
+<div class="section cat-net" id="sec-net">
+  <div class="section-title">
+    <span class="label">System, Networking &amp; DevOps</span>
+    <div class="line"></div>
+  </div>
+  <div class="grid">
+
+    <div class="card" data-tags="binary executable run elf permissions">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,159,67,0.1);color:var(--accent6)">(binary)</span>
+        <div><div class="card-title">ELF Binary / Executable</div><div class="card-subtitle">Compiled program</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Make executable + run</div>
+          <div class="cmd"><span class="prompt">$ </span>chmod <span class="arg">+x</span> ./program <span class="flag">&amp;&amp;</span> ./program<button class="copy-btn" onclick="copyCmd(this, 'chmod +x ./program && ./program')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">File info</div>
+          <div class="cmd"><span class="prompt">$ </span>file ./program<button class="copy-btn" onclick="copyCmd(this, 'file ./program')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">List dynamic dependencies</div>
+          <div class="cmd"><span class="prompt">$ </span>ldd ./program<button class="copy-btn" onclick="copyCmd(this, 'ldd ./program')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="tar gz zip archive extract compress">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,159,67,0.1);color:var(--accent6)">.tar.gz / .zip</span>
+        <div><div class="card-title">Archives</div><div class="card-subtitle">Compressed file bundles</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Extract .tar.gz</div>
+          <div class="cmd"><span class="prompt">$ </span>tar <span class="flag">-xzvf</span> file.tar.gz<button class="copy-btn" onclick="copyCmd(this, 'tar -xzvf file.tar.gz')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Extract .zip</div>
+          <div class="cmd"><span class="prompt">$ </span>unzip file.zip<button class="copy-btn" onclick="copyCmd(this, 'unzip file.zip')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Create .tar.gz</div>
+          <div class="cmd"><span class="prompt">$ </span>tar <span class="flag">-czvf</span> out.tar.gz <span class="arg">./folder</span><button class="copy-btn" onclick="copyCmd(this, 'tar -czvf out.tar.gz ./folder')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">List contents (no extract)</div>
+          <div class="cmd"><span class="prompt">$ </span>tar <span class="flag">-tzvf</span> file.tar.gz<button class="copy-btn" onclick="copyCmd(this, 'tar -tzvf file.tar.gz')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="log view tail grep system monitoring syslog">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,159,67,0.1);color:var(--accent6)">.log</span>
+        <div><div class="card-title">Log File</div><div class="card-subtitle">System / app logs</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Follow live output</div>
+          <div class="cmd"><span class="prompt">$ </span>tail <span class="flag">-f</span> file.log<button class="copy-btn" onclick="copyCmd(this, 'tail -f file.log')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Search with grep</div>
+          <div class="cmd"><span class="prompt">$ </span>grep <span class="flag">-i</span> <span class="arg">"error"</span> file.log<button class="copy-btn" onclick="copyCmd(this, 'grep -i \"error\" file.log')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Last 100 lines</div>
+          <div class="cmd"><span class="prompt">$ </span>tail <span class="flag">-n</span> <span class="arg">100</span> file.log<button class="copy-btn" onclick="copyCmd(this, 'tail -n 100 file.log')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="pem crt key certificate ssl tls openssl inspect">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,159,67,0.1);color:var(--accent6)">.pem / .crt</span>
+        <div><div class="card-title">SSL Certificate / Key</div><div class="card-subtitle">TLS / PKI</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">View certificate info</div>
+          <div class="cmd"><span class="prompt">$ </span>openssl x509 <span class="flag">-in</span> file.crt <span class="flag">-text -noout</span><button class="copy-btn" onclick="copyCmd(this, 'openssl x509 -in file.crt -text -noout')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Check expiry</div>
+          <div class="cmd"><span class="prompt">$ </span>openssl x509 <span class="flag">-in</span> file.pem <span class="flag">-enddate -noout</span><button class="copy-btn" onclick="copyCmd(this, 'openssl x509 -in file.pem -enddate -noout')">copy</button></div></div>
+        <div class="note">Install: sudo apt install openssl</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="pcap network capture wireshark tcpdump tshark">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,159,67,0.1);color:var(--accent6)">.pcap</span>
+        <div><div class="card-title">Packet Capture</div><div class="card-subtitle">Network traffic</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Read in terminal</div>
+          <div class="cmd"><span class="prompt">$ </span>tcpdump <span class="flag">-r</span> file.pcap<button class="copy-btn" onclick="copyCmd(this, 'tcpdump -r file.pcap')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Open in Wireshark</div>
+          <div class="cmd"><span class="prompt">$ </span>wireshark file.pcap<button class="copy-btn" onclick="copyCmd(this, 'wireshark file.pcap')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Filter with tshark</div>
+          <div class="cmd"><span class="prompt">$ </span>tshark <span class="flag">-r</span> file.pcap <span class="flag">-Y</span> <span class="arg">"http"</span><button class="copy-btn" onclick="copyCmd(this, 'tshark -r file.pcap -Y "http"')">copy</button></div></div>
+        <div class="note">Install: sudo apt install wireshark tshark</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="ansible playbook yml yaml run execute devops">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,159,67,0.1);color:var(--accent6)">playbook.yml</span>
+        <div><div class="card-title">Ansible Playbook</div><div class="card-subtitle">Infrastructure automation</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Run playbook</div>
+          <div class="cmd"><span class="prompt">$ </span>ansible-playbook playbook.yml<button class="copy-btn" onclick="copyCmd(this, 'ansible-playbook playbook.yml')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Dry-run (check mode)</div>
+          <div class="cmd"><span class="prompt">$ </span>ansible-playbook playbook.yml <span class="flag">--check</span><button class="copy-btn" onclick="copyCmd(this, 'ansible-playbook playbook.yml --check')">copy</button></div></div>
+        <div class="note">Install: pip install ansible</div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="terraform tf plan apply infra aws cloud">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,159,67,0.1);color:var(--accent6)">.tf</span>
+        <div><div class="card-title">Terraform Config</div><div class="card-subtitle">Infrastructure as code</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Initialize</div>
+          <div class="cmd"><span class="prompt">$ </span>terraform init<button class="copy-btn" onclick="copyCmd(this, 'terraform init')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Preview changes</div>
+          <div class="cmd"><span class="prompt">$ </span>terraform plan<button class="copy-btn" onclick="copyCmd(this, 'terraform plan')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Apply changes</div>
+          <div class="cmd"><span class="prompt">$ </span>terraform apply<button class="copy-btn" onclick="copyCmd(this, 'terraform apply')">copy</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tags="awk sed stream text processing script run">
+      <div class="card-header">
+        <span class="ext-badge" style="background:rgba(255,159,67,0.1);color:var(--accent6)">.awk</span>
+        <div><div class="card-title">AWK Script</div><div class="card-subtitle">Text stream processing</div></div>
+      </div>
+      <div class="card-body">
+        <div class="cmd-row"><div class="cmd-label">Run on file</div>
+          <div class="cmd"><span class="prompt">$ </span>awk <span class="flag">-f</span> script.awk data.txt<button class="copy-btn" onclick="copyCmd(this, 'awk -f script.awk data.txt')">copy</button></div></div>
+        <div class="cmd-row"><div class="cmd-label">Quick one-liner</div>
+          <div class="cmd"><span class="prompt">$ </span>awk <span class="arg">'{print $1}'</span> data.txt<button class="copy-btn" onclick="copyCmd(this, 'awk \'{print $1}\' data.txt')">copy</button></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <p>Linux File Execution Cheat Sheet · IT · CS · Data Science · DevOps · Networking</p>
+  <p style="margin-top:8px;font-size:10px;">Click "copy" on any command to copy it to clipboard</p>
+</footer>
+
+<script>
+function copyCmd(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'done!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'copy';
+      btn.classList.remove('copied');
+    }, 1500);
+  });
+}
+
+function filterCards() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(card => {
+    const tags = card.getAttribute('data-tags') || '';
+    const text = card.textContent.toLowerCase();
+    const visible = !query || tags.includes(query) || text.includes(query);
+    card.classList.toggle('hidden', !visible);
+  });
+
+  // Hide empty sections
+  document.querySelectorAll('.section').forEach(section => {
+    const visible = section.querySelectorAll('.card:not(.hidden)').length > 0;
+    section.classList.toggle('hidden', !visible);
+  });
+}
+</script>
+</body>
+</html>
