@@ -19,6 +19,35 @@
     --text: #e2e8f0;
     --muted: #64748b;
     --cmd-bg: #0d1117;
+    --toggle-bg: #1e2330;
+    --toggle-icon: '☀️';
+    --shadow: rgba(0,0,0,0.4);
+    --gradient-a: rgba(0,255,163,0.07);
+    --gradient-b: rgba(0,200,255,0.07);
+  }
+
+  html.light {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --border: #dde3ed;
+    --accent1: #00a86b;
+    --accent2: #0088cc;
+    --accent3: #e03c3c;
+    --accent4: #c49000;
+    --accent5: #8b4fcf;
+    --accent6: #d4720a;
+    --text: #1a202c;
+    --muted: #718096;
+    --cmd-bg: #eef2f7;
+    --toggle-bg: #dde3ed;
+    --toggle-icon: '🌙';
+    --shadow: rgba(0,0,0,0.12);
+    --gradient-a: rgba(0,168,107,0.06);
+    --gradient-b: rgba(0,136,204,0.06);
+  }
+
+  *, *::before, *::after {
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,8 +59,8 @@
     min-height: 100vh;
     padding: 40px 20px;
     background-image:
-      radial-gradient(ellipse at 10% 0%, rgba(0,255,163,0.07) 0%, transparent 50%),
-      radial-gradient(ellipse at 90% 100%, rgba(0,200,255,0.07) 0%, transparent 50%);
+      radial-gradient(ellipse at 10% 0%, var(--gradient-a) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 100%, var(--gradient-b) 0%, transparent 50%);
   }
 
   header {
@@ -53,7 +82,7 @@
     font-size: clamp(2rem, 5vw, 3.5rem);
     font-weight: 800;
     line-height: 1.1;
-    background: linear-gradient(135deg, #fff 30%, var(--accent1) 70%, var(--accent2) 100%);
+    background: linear-gradient(135deg, var(--text) 20%, var(--accent1) 60%, var(--accent2) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -144,7 +173,7 @@
 
   .card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 30px var(--shadow);
   }
 
   .card-header {
@@ -274,6 +303,48 @@
   .cat-net .card { border-top: 2px solid var(--accent6); }
   .cat-net .card:hover { border-color: var(--accent6); box-shadow: 0 8px 30px rgba(255,159,67,0.1); }
 
+  /* ── Theme Toggle ── */
+  .theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--toggle-bg);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 4px;
+    box-shadow: 0 2px 12px var(--shadow);
+  }
+
+  .theme-toggle button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 7px 14px;
+    border-radius: 40px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .theme-toggle button.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 6px var(--shadow);
+  }
+
+  .theme-toggle button:hover:not(.active) {
+    color: var(--text);
+  }
+
   @keyframes fadeDown { from { opacity:0; transform: translateY(-16px); } to { opacity:1; transform: translateY(0); } }
   @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
 
@@ -297,6 +368,12 @@
 </style>
 </head>
 <body>
+
+<!-- Theme Toggle -->
+<div class="theme-toggle" role="group" aria-label="Theme switcher">
+  <button id="btn-dark" class="active" onclick="setTheme('dark')" title="Dark theme">🌙 Dark</button>
+  <button id="btn-light" onclick="setTheme('light')" title="Light theme">☀️ Light</button>
+</div>
 
 <header>
   <div class="eyebrow">// reference guide</div>
@@ -1006,7 +1083,25 @@
 </footer>
 
 <script>
-function copyCmd(btn, text) {
+function setTheme(theme) {
+  const html = document.documentElement;
+  if (theme === 'light') {
+    html.classList.add('light');
+  } else {
+    html.classList.remove('light');
+  }
+  document.getElementById('btn-dark').classList.toggle('active', theme === 'dark');
+  document.getElementById('btn-light').classList.toggle('active', theme === 'light');
+  try { localStorage.setItem('cs-theme', theme); } catch(e) {}
+}
+
+// Restore saved theme on load
+(function() {
+  try {
+    const saved = localStorage.getItem('cs-theme');
+    if (saved === 'light') setTheme('light');
+  } catch(e) {}
+})();
   navigator.clipboard.writeText(text).then(() => {
     btn.textContent = 'done!';
     btn.classList.add('copied');
